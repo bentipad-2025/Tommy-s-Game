@@ -125,18 +125,12 @@
 
         // Generate random food position
         function randomFood() {
-            food = {
-                x: Math.floor(Math.random() * tileCount),
-                y: Math.floor(Math.random() * tileCount)
-            };
-            
-            // Make sure food doesn't spawn on snake
-            for (let segment of snake) {
-                if (segment.x === food.x && segment.y === food.y) {
-                    randomFood();
-                    return;
-                }
-            }
+            do {
+                food = {
+                    x: Math.floor(Math.random() * tileCount),
+                    y: Math.floor(Math.random() * tileCount)
+                };
+            } while (snake.some(segment => segment.x === food.x && segment.y === food.y));
         }
 
         // Draw everything
@@ -222,6 +216,7 @@
             gameRunning = true;
             gameOverElement.style.display = 'none';
             randomFood();
+            draw(); // Redraw the initial state
         }
 
         // Handle keyboard input
@@ -254,10 +249,8 @@
 
         // Initialize game
         randomFood();
+        draw(); // Draw initial state
         setInterval(gameLoop, 150);
-        
-        // Initial draw
-        draw();
     </script>
 </body>
 </html>
