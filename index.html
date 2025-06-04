@@ -94,7 +94,7 @@
         <canvas id="gameCanvas" width="400" height="400"></canvas>
         <div class="controls">
             Use arrow keys or WASD to move<br>
-            Eat the red food to grow and score points!
+            Press any arrow key to start playing!
         </div>
     </div>
     
@@ -221,23 +221,23 @@
 
         // Handle keyboard input
         document.addEventListener('keydown', (e) => {
-            if (!gameRunning) return;
-
             const key = e.key.toLowerCase();
             
-            // Prevent reverse direction
-            if ((key === 'arrowleft' || key === 'a') && dx !== 1) {
-                dx = -1;
-                dy = 0;
-            } else if ((key === 'arrowright' || key === 'd') && dx !== -1) {
-                dx = 1;
-                dy = 0;
-            } else if ((key === 'arrowup' || key === 'w') && dy !== 1) {
-                dx = 0;
-                dy = -1;
-            } else if ((key === 'arrowdown' || key === 's') && dy !== -1) {
-                dx = 0;
-                dy = 1;
+            // Prevent reverse direction only if game is running and snake is moving
+            if (gameRunning) {
+                if ((key === 'arrowleft' || key === 'a') && dx !== 1) {
+                    dx = -1;
+                    dy = 0;
+                } else if ((key === 'arrowright' || key === 'd') && dx !== -1) {
+                    dx = 1;
+                    dy = 0;
+                } else if ((key === 'arrowup' || key === 'w') && dy !== 1) {
+                    dx = 0;
+                    dy = -1;
+                } else if ((key === 'arrowdown' || key === 's') && dy !== -1) {
+                    dx = 0;
+                    dy = 1;
+                }
             }
         });
 
