@@ -342,17 +342,23 @@
             score = 0;
             level = 1;
             gameSpeed = 150;
-            gameRunning = true;
+            inMinigame = false;
+            
             scoreElement.textContent = score;
             levelElement.textContent = level;
             coinsElement.textContent = coins;
             gameOverElement.style.display = 'none';
+            minigameElement.style.display = 'none';
+            
             generateObstacles();
             generateFakeObstacles();
             generateFood();
+            
             if (gameLoopId) {
                 clearTimeout(gameLoopId);
             }
+            
+            gameRunning = true;
             gameLoop();
         }
 
@@ -505,7 +511,10 @@
                 const settings = getLevelSettings();
                 gameSpeed = settings.speed;
                 
-                startMinigame();
+                // Start minigame after a brief delay
+                setTimeout(() => {
+                    startMinigame();
+                }, 500);
             }
         }
 
@@ -1017,7 +1026,9 @@
             
             if (food.length === 0) {
                 checkLevelUp();
-                generateFood();
+                if (!inMinigame) {
+                    generateFood();
+                }
             }
         }
 
@@ -1037,20 +1048,30 @@
                 clearTimeout(gameLoopId);
                 gameLoopId = null;
             }
+            
+            // Reset all game state
             snake = [{x: 10, y: 10}];
             dx = 0;
             dy = 0;
             score = 0;
             level = 1;
             gameSpeed = 150;
-            gameRunning = true;
+            inMinigame = false;
+            
+            // Update display
             scoreElement.textContent = score;
             levelElement.textContent = level;
             coinsElement.textContent = coins;
             gameOverElement.style.display = 'none';
+            minigameElement.style.display = 'none';
+            
+            // Generate new level
             generateObstacles();
             generateFakeObstacles();
             generateFood();
+            
+            // Start game
+            gameRunning = true;
             gameLoop();
         }
 
