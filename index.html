@@ -1,55 +1,16 @@
-// Check for level progression
-        function checkLevelUp() {
-            const requiredScore = level * 50; // Need 50 points per level (5 food items)
-            if (score >= requiredScore) {
-                level++;
-                levelElement.textContent = level;
-                
-                // Update game speed
-                const settings = getLevelSettings();
-                gameSpeed = settings.speed;
-                
-                // Generate new obstacles for the new level
-                generateObstacles();
-                generateFakeObstacles();
-                generateFood();
-                
-                // Show level up message briefly
-                showLevelUpMessage();
-            }
-        }
-
-        // Show level up message
-        function showLevelUpMessage() {
-            const message = document.createElement('div');
-            message.textContent = `Level ${level}!`;
-            message.style.cssText = `
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                color: #4ade80;
-                font-size: 3em;
-                font-weight: bold;
-                text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
-                z-index: 1000;
-                pointer-events: none;
-            `;
-            document.body.appendChild(message);
-            
-            // Remove message after 1.5 seconds
-            setTimeout(() => {
-                if (message.parentNode) {
-                    message.parentNode.removeChild(message);
-                }
-            }, 1500);
-        }<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Snake Game</title>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
             margin: 0;
             padding: 0;
@@ -59,6 +20,7 @@
             min-height: 100vh;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             font-family: 'Arial', sans-serif;
+            overflow: hidden;
         }
 
         .game-container {
@@ -69,6 +31,8 @@
             padding: 30px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
             border: 1px solid rgba(255, 255, 255, 0.2);
+            max-width: 500px;
+            width: 100%;
         }
 
         h1 {
@@ -90,6 +54,8 @@
             border-radius: 10px;
             background: #2a2a2a;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            display: block;
+            margin: 0 auto;
         }
 
         .controls {
@@ -245,10 +211,10 @@
         // Calculate level-based difficulty
         function getLevelSettings() {
             return {
-                realObstacles: Math.min(3 + level * 2, 12), // Start with 5, add 2 per level, max 12
-                fakeObstacles: Math.min(4 + level * 2, 15), // Start with 6, add 2 per level, max 15
-                speed: Math.max(50, 150 - (level - 1) * 15), // Start at 150ms, get 15ms faster per level, min 50ms
-                foodCount: Math.min(1 + Math.floor(level / 2), 5) // Start with 1, add 1 every 2 levels, max 5
+                realObstacles: Math.min(3 + level * 2, 12),
+                fakeObstacles: Math.min(4 + level * 2, 15),
+                speed: Math.max(50, 150 - (level - 1) * 15),
+                foodCount: Math.min(1 + Math.floor(level / 2), 5)
             };
         }
 
@@ -262,17 +228,13 @@
                 let obstacleX, obstacleY;
                 let validPosition = false;
                 
-                // Keep trying until we find a valid position
                 while (!validPosition) {
                     obstacleX = Math.floor(Math.random() * tileCount);
                     obstacleY = Math.floor(Math.random() * tileCount);
                     
-                    // Make sure obstacle doesn't spawn on snake starting position
-                    // or too close to it (within 3 tiles)
                     const distanceFromSnake = Math.abs(obstacleX - 10) + Math.abs(obstacleY - 10);
                     
                     if (distanceFromSnake > 3) {
-                        // Check if position conflicts with existing obstacles
                         validPosition = true;
                         for (let obstacle of obstacles) {
                             if (obstacle.x === obstacleX && obstacle.y === obstacleY) {
@@ -306,7 +268,6 @@
                     if (distanceFromSnake > 3) {
                         validPosition = true;
                         
-                        // Check if position conflicts with real obstacles
                         for (let obstacle of obstacles) {
                             if (obstacle.x === obstacleX && obstacle.y === obstacleY) {
                                 validPosition = false;
@@ -314,7 +275,6 @@
                             }
                         }
                         
-                        // Check if position conflicts with existing fake obstacles
                         if (validPosition) {
                             for (let fakeObstacle of fakeObstacles) {
                                 if (fakeObstacle.x === obstacleX && fakeObstacle.y === obstacleY) {
@@ -348,7 +308,6 @@
                     
                     validPosition = true;
                     
-                    // Make sure food doesn't appear on snake
                     for (let segment of snake) {
                         if (segment.x === newFood.x && segment.y === newFood.y) {
                             validPosition = false;
@@ -356,7 +315,6 @@
                         }
                     }
                     
-                    // Make sure food doesn't appear on real obstacles
                     if (validPosition) {
                         for (let obstacle of obstacles) {
                             if (obstacle.x === newFood.x && obstacle.y === newFood.y) {
@@ -366,7 +324,6 @@
                         }
                     }
                     
-                    // Make sure food doesn't appear on fake obstacles
                     if (validPosition) {
                         for (let fakeObstacle of fakeObstacles) {
                             if (fakeObstacle.x === newFood.x && fakeObstacle.y === newFood.y) {
@@ -376,7 +333,6 @@
                         }
                     }
                     
-                    // Make sure food doesn't appear on other food
                     if (validPosition) {
                         for (let existingFood of food) {
                             if (existingFood.x === newFood.x && existingFood.y === newFood.y) {
@@ -391,16 +347,58 @@
             }
         }
 
+        // Check for level progression
+        function checkLevelUp() {
+            const requiredScore = level * 50;
+            if (score >= requiredScore) {
+                level++;
+                levelElement.textContent = level;
+                
+                const settings = getLevelSettings();
+                gameSpeed = settings.speed;
+                
+                generateObstacles();
+                generateFakeObstacles();
+                generateFood();
+                
+                showLevelUpMessage();
+            }
+        }
+
+        // Show level up message
+        function showLevelUpMessage() {
+            const message = document.createElement('div');
+            message.textContent = `Level ${level}!`;
+            message.style.cssText = `
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                color: #4ade80;
+                font-size: 3em;
+                font-weight: bold;
+                text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+                z-index: 1000;
+                pointer-events: none;
+            `;
+            document.body.appendChild(message);
+            
+            setTimeout(() => {
+                if (message.parentNode) {
+                    message.parentNode.removeChild(message);
+                }
+            }, 1500);
+        }
+
         // Draw game elements
         function draw() {
-            // Clear canvas with gradient background
             const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
             gradient.addColorStop(0, '#1a1a1a');
             gradient.addColorStop(1, '#2a2a2a');
             ctx.fillStyle = gradient;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Draw real obstacles (solid purple)
+            // Draw real obstacles
             obstacles.forEach(obstacle => {
                 const obstacleGradient = ctx.createRadialGradient(
                     obstacle.x * gridSize + gridSize/2, 
@@ -413,13 +411,12 @@
                 ctx.fillStyle = obstacleGradient;
                 ctx.fillRect(obstacle.x * gridSize + 1, obstacle.y * gridSize + 1, gridSize - 2, gridSize - 2);
                 
-                // Add a subtle border
                 ctx.strokeStyle = '#a855f7';
                 ctx.lineWidth = 2;
                 ctx.strokeRect(obstacle.x * gridSize + 1, obstacle.y * gridSize + 1, gridSize - 2, gridSize - 2);
             });
 
-            // Draw fake obstacles (slightly transparent purple - the key difference!)
+            // Draw fake obstacles
             fakeObstacles.forEach(fakeObstacle => {
                 const fakeObstacleGradient = ctx.createRadialGradient(
                     fakeObstacle.x * gridSize + gridSize/2, 
@@ -430,24 +427,21 @@
                 fakeObstacleGradient.addColorStop(0, '#8b5cf6');
                 fakeObstacleGradient.addColorStop(1, '#6d28d9');
                 
-                // Make fake obstacles slightly transparent
                 ctx.globalAlpha = 0.7;
                 ctx.fillStyle = fakeObstacleGradient;
                 ctx.fillRect(fakeObstacle.x * gridSize + 1, fakeObstacle.y * gridSize + 1, gridSize - 2, gridSize - 2);
                 
-                // Add a dashed border to make them slightly different
                 ctx.strokeStyle = '#a855f7';
                 ctx.lineWidth = 2;
                 ctx.setLineDash([4, 4]);
                 ctx.strokeRect(fakeObstacle.x * gridSize + 1, fakeObstacle.y * gridSize + 1, gridSize - 2, gridSize - 2);
-                ctx.setLineDash([]); // Reset line dash
-                ctx.globalAlpha = 1.0; // Reset transparency
+                ctx.setLineDash([]);
+                ctx.globalAlpha = 1.0;
             });
 
-            // Draw snake with gradient
+            // Draw snake
             snake.forEach((segment, index) => {
                 if (index === 0) {
-                    // Snake head
                     const headGradient = ctx.createRadialGradient(
                         segment.x * gridSize + gridSize/2, 
                         segment.y * gridSize + gridSize/2, 0,
@@ -458,7 +452,6 @@
                     headGradient.addColorStop(1, '#16a34a');
                     ctx.fillStyle = headGradient;
                 } else {
-                    // Snake body
                     const bodyGradient = ctx.createRadialGradient(
                         segment.x * gridSize + gridSize/2, 
                         segment.y * gridSize + gridSize/2, 0,
@@ -473,7 +466,7 @@
                 ctx.fillRect(segment.x * gridSize + 1, segment.y * gridSize + 1, gridSize - 2, gridSize - 2);
             });
 
-            // Draw food with pulsing effect
+            // Draw food
             food.forEach(foodItem => {
                 const time = Date.now() * 0.005;
                 const pulse = Math.sin(time) * 0.1 + 0.9;
@@ -499,18 +492,15 @@
         function update() {
             if (!gameRunning) return;
 
-            // Only move if we have a direction
             if (dx === 0 && dy === 0) return;
 
             const head = {x: snake[0].x + dx, y: snake[0].y + dy};
 
-            // Check wall collision
             if (head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount) {
                 gameOver();
                 return;
             }
 
-            // Check self collision
             for (let segment of snake) {
                 if (head.x === segment.x && head.y === segment.y) {
                     gameOver();
@@ -518,7 +508,6 @@
                 }
             }
 
-            // Check obstacle collision
             for (let obstacle of obstacles) {
                 if (head.x === obstacle.x && head.y === obstacle.y) {
                     gameOver();
@@ -528,13 +517,12 @@
 
             snake.unshift(head);
 
-            // Check food collision
             let foodEaten = false;
             for (let i = food.length - 1; i >= 0; i--) {
                 if (head.x === food[i].x && head.y === food[i].y) {
                     score += 10;
                     scoreElement.textContent = score;
-                    food.splice(i, 1); // Remove eaten food
+                    food.splice(i, 1);
                     foodEaten = true;
                     break;
                 }
@@ -544,7 +532,6 @@
                 snake.pop();
             }
             
-            // If all food is eaten, generate new food and check for level up
             if (food.length === 0) {
                 checkLevelUp();
                 generateFood();
@@ -583,7 +570,7 @@
             gameLoop();
         }
 
-        // Change direction (for mobile controls)
+        // Change direction
         function changeDirection(direction) {
             if (!gameRunning) return;
             
@@ -641,7 +628,7 @@
             draw();
             
             if (gameRunning) {
-                gameLoopId = setTimeout(gameLoop, gameSpeed); // Use dynamic game speed
+                gameLoopId = setTimeout(gameLoop, gameSpeed);
             }
         }
 
