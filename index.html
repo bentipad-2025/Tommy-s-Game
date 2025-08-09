@@ -167,6 +167,7 @@
         let dy = 0;
         let score = 0;
         let gameRunning = true;
+        let gameLoopId = null;
 
         // Initialize game
         function init() {
@@ -178,6 +179,9 @@
             scoreElement.textContent = score;
             gameOverElement.style.display = 'none';
             generateFood();
+            if (gameLoopId) {
+                clearTimeout(gameLoopId);
+            }
             gameLoop();
         }
 
@@ -259,6 +263,9 @@
         function update() {
             if (!gameRunning) return;
 
+            // Only move if we have a direction
+            if (dx === 0 && dy === 0) return;
+
             const head = {x: snake[0].x + dx, y: snake[0].y + dy};
 
             // Check wall collision
@@ -290,12 +297,19 @@
         // Game over
         function gameOver() {
             gameRunning = false;
+            if (gameLoopId) {
+                clearTimeout(gameLoopId);
+                gameLoopId = null;
+            }
             gameOverElement.style.display = 'block';
         }
 
         // Restart game
         function restartGame() {
-            // Reset all game variables
+            if (gameLoopId) {
+                clearTimeout(gameLoopId);
+                gameLoopId = null;
+            }
             snake = [{x: 10, y: 10}];
             dx = 0;
             dy = 0;
@@ -365,7 +379,7 @@
             draw();
             
             if (gameRunning) {
-                setTimeout(gameLoop, 150); // Game speed
+                gameLoopId = setTimeout(gameLoop, 150); // Game speed
             }
         }
 
