@@ -295,7 +295,16 @@
 
         // Restart game
         function restartGame() {
-            init();
+            // Reset all game variables
+            snake = [{x: 10, y: 10}];
+            dx = 0;
+            dy = 0;
+            score = 0;
+            gameRunning = true;
+            scoreElement.textContent = score;
+            gameOverElement.style.display = 'none';
+            generateFood();
+            gameLoop();
         }
 
         // Change direction (for mobile controls)
