@@ -813,3 +813,508 @@
             projectiles.forEach(projectile => {
                 ctx.fillStyle = '#fbbf24';
                 ctx.fillRect(projectile.x - 2, projectile.y - 5, 4, 10);
+            });
+            
+            ctx.fillStyle = '#22c55e';
+            ctx.fillRect(playerX - 20, canvas.height - 30, 40, 20);
+        }
+
+        function drawDodgeGame() {
+            ctx.fillStyle = '#1e293b';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            fallingFood.forEach(food => {
+                if (!food.collected) {
+                    ctx.fillStyle = '#fef08a';
+                    ctx.fillRect(food.x, food.y, 20, 20);
+                }
+            });
+            
+            ctx.fillStyle = '#22c55e';
+            ctx.fillRect(playerX - 10, canvas.height - 30, 20, 20);
+        }
+
+        function drawMazeGame() {
+            ctx.fillStyle = '#111827';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            const cellSize = 40;
+            
+            mazeWalls.forEach(wall => {
+                ctx.fillStyle = '#6b7280';
+                ctx.fillRect(wall.x * cellSize, wall.y * cellSize, cellSize, cellSize);
+            });
+            
+            ctx.fillStyle = '#fef08a';
+            ctx.fillRect(mazeFood.x * cellSize + 5, mazeFood.y * cellSize + 5, cellSize - 10, cellSize - 10);
+            
+            ctx.fillStyle = '#22c55e';
+            ctx.fillRect(mazePlayerX * cellSize + 5, mazePlayerY * cellSize + 5, cellSize - 10, cellSize - 10);
+        }
+
+        let minigameTime = 0;
+        function minigameLoop() {
+            if (!inMinigame) return;
+            
+            updateMinigame();
+            drawMinigame();
+            
+            minigameTime++;
+            
+            if (minigameTime >= 300) {
+                minigameTime = 0;
+                endMinigame();
+                return;
+            }
+            
+            requestAnimationFrame(minigameLoop);
+        }
+
+        // Draw game elements
+        function draw() {
+            const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+            gradient.addColorStop(0, '#1a1a1a');
+            gradient.addColorStop(1, '#2a2a2a');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw real obstacles
+            obstacles.forEach(obstacle => {
+                const obstacleGradient = ctx.createRadialGradient(
+                    obstacle.x * gridSize + gridSize/2, 
+                    obstacle.y * gridSize + gridSize/2, 0,
+                    obstacle.x * gridSize + gridSize/2, 
+                    obstacle.y * gridSize + gridSize/2, gridSize/2
+                );
+                obstacleGradient.addColorStop(0, '#8b5cf6');
+                obstacleGradient.addColorStop(1, '#6d28d9');
+                ctx.fillStyle = obstacleGradient;
+                ctx.fillRect(obstacle.x * gridSize + 1, obstacle.y * gridSize + 1, gridSize - 2, gridSize - 2);
+                
+                ctx.strokeStyle = '#a855f7';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(obstacle.x * gridSize + 1, obstacle.y * gridSize + 1, gridSize - 2, gridSize - 2);
+            });
+
+            // Draw fake obstacles
+            fakeObstacles.forEach(fakeObstacle => {
+                const fakeObstacleGradient = ctx.createRadialGradient(
+                    fakeObstacle.x * gridSize + gridSize/2, 
+                    fakeObstacle.y * gridSize + gridSize/2, 0,
+                    fakeObstacle.x * gridSize + gridSize/2, 
+                    fakeObstacle.y * gridSize + gridSize/2, gridSize/2
+                );
+                fakeObstacleGradient.addColorStop(0, '#8b5cf6');
+                fakeObstacleGradient.addColorStop(1, '#6d28d9');
+                
+                ctx.globalAlpha = 0.7;
+                ctx.fillStyle = fakeObstacleGradient;
+                ctx.fillRect(fakeObstacle.x * gridSize + 1, fakeObstacle.y * gridSize + 1, gridSize - 2, gridSize - 2);
+                
+                ctx.strokeStyle = '#a855f7';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([4, 4]);
+                ctx.strokeRect(fakeObstacle.x * gridSize + 1, fakeObstacle.y * gridSize + 1, gridSize - 2, gridSize - 2);
+                ctx.setLineDash([]);
+                ctx.globalAlpha = 1.0;
+            });
+
+            // Draw snake with current skin
+            const currentSkinData = skins[currentSkin];
+            snake.forEach((segment, index) => {
+                if (index === 0) {
+                    const headGradient = ctx.createRadialGradient(
+                        segment.x * gridSize + gridSize/2, 
+                        segment.y * gridSize + gridSize/2, 0,
+                        segment.x * gridSize + gridSize/2, 
+                        segment.y * gridSize + gridSize/2, gridSize/2
+                    );
+                    headGradient.addColorStop(0, currentSkinData.headColors[0]);
+                    headGradient.addColorStop(1, currentSkinData.headColors[1]);
+                    ctx.fillStyle = headGradient;
+                } else {
+                    const bodyGradient = ctx.createRadialGradient(
+                        segment.x * gridSize + gridSize/2, 
+                        segment.y * gridSize + gridSize/2, 0,
+                        segment.x * gridSize + gridSize/2, 
+                        segment.y * gridSize + gridSize/2, gridSize/2
+                    );
+                    bodyGradient.addColorStop(0, currentSkinData.bodyColors[0]);
+                    bodyGradient.addColorStop(1, currentSkinData.bodyColors[1]);
+                    ctx.fillStyle = bodyGradient;
+                }
+                
+                ctx.fillRect(segment.x * gridSize + 1, segment.y * gridSize + 1, gridSize - 2, gridSize - 2);
+            });
+
+            // Draw food
+            food.forEach(foodItem => {
+                const time = Date.now() * 0.005;
+                const pulse = Math.sin(time) * 0.1 + 0.9;
+                const foodSize = gridSize * pulse;
+                const offset = (gridSize - foodSize) / 2;
+                
+                const foodGradient = ctx.createRadialGradient(
+                    foodItem.x * gridSize + gridSize/2, 
+                    foodItem.y * gridSize + gridSize/2, 0,
+                    foodItem.x * gridSize + gridSize/2, 
+                    foodItem.y * gridSize + gridSize/2, foodSize/2
+                );
+                foodGradient.addColorStop(0, '#fef08a');
+                foodGradient.addColorStop(0.7, '#f59e0b');
+                foodGradient.addColorStop(1, '#d97706');
+                
+                ctx.fillStyle = foodGradient;
+                ctx.fillRect(foodItem.x * gridSize + offset, foodItem.y * gridSize + offset, foodSize, foodSize);
+            });
+        }
+
+        // Update game state
+        function update() {
+            if (!gameRunning) return;
+
+            if (dx === 0 && dy === 0) return;
+
+            const head = {x: snake[0].x + dx, y: snake[0].y + dy};
+
+            if (head.x < 0 || head.x >= tileCount || head.y < 0 || head.y >= tileCount) {
+                gameOver();
+                return;
+            }
+
+            for (let segment of snake) {
+                if (head.x === segment.x && head.y === segment.y) {
+                    gameOver();
+                    return;
+                }
+            }
+
+            for (let obstacle of obstacles) {
+                if (head.x === obstacle.x && head.y === obstacle.y) {
+                    gameOver();
+                    return;
+                }
+            }
+
+            snake.unshift(head);
+
+            let foodEaten = false;
+            for (let i = food.length - 1; i >= 0; i--) {
+                if (head.x === food[i].x && head.y === food[i].y) {
+                    score += 10;
+                    coins += 2;
+                    scoreElement.textContent = score;
+                    coinsElement.textContent = coins;
+                    food.splice(i, 1);
+                    foodEaten = true;
+                    break;
+                }
+            }
+            
+            if (!foodEaten) {
+                snake.pop();
+            }
+            
+            if (food.length === 0) {
+                checkLevelUp();
+                generateFood();
+            }
+        }
+
+        // Game over
+        function gameOver() {
+            gameRunning = false;
+            if (gameLoopId) {
+                clearTimeout(gameLoopId);
+                gameLoopId = null;
+            }
+            gameOverElement.style.display = 'block';
+        }
+
+        // Restart game
+        function restartGame() {
+            if (gameLoopId) {
+                clearTimeout(gameLoopId);
+                gameLoopId = null;
+            }
+            snake = [{x: 10, y: 10}];
+            dx = 0;
+            dy = 0;
+            score = 0;
+            level = 1;
+            gameSpeed = 150;
+            gameRunning = true;
+            scoreElement.textContent = score;
+            levelElement.textContent = level;
+            coinsElement.textContent = coins;
+            gameOverElement.style.display = 'none';
+            generateObstacles();
+            generateFakeObstacles();
+            generateFood();
+            gameLoop();
+        }
+
+        // Change direction
+        function changeDirection(direction) {
+            if (!gameRunning || inMinigame) return;
+            
+            switch(direction) {
+                case 'up':
+                    if (dy !== 1) { dx = 0; dy = -1; }
+                    break;
+                case 'down':
+                    if (dy !== -1) { dx = 0; dy = 1; }
+                    break;
+                case 'left':
+                    if (dx !== 1) { dx = -1; dy = 0; }
+                    break;
+                case 'right':
+                    if (dx !== -1) { dx = 1; dy = 0; }
+                    break;
+            }
+        }
+
+        // Skin shop functions
+        function openSkinShop() {
+            if (gameRunning) {
+                gameRunning = false;
+                if (gameLoopId) {
+                    clearTimeout(gameLoopId);
+                    gameLoopId = null;
+                }
+            }
+            skinShopElement.style.display = 'block';
+            populateSkinShop();
+        }
+
+        function closeSkinShop() {
+            skinShopElement.style.display = 'none';
+            if (!inMinigame && gameOverElement.style.display !== 'block') {
+                gameRunning = true;
+                gameLoop();
+            }
+        }
+
+        function populateSkinShop() {
+            skinGridElement.innerHTML = '';
+            
+            Object.keys(skins).forEach(skinId => {
+                const skin = skins[skinId];
+                const isOwned = ownedSkins.includes(skinId);
+                const isEquipped = currentSkin === skinId;
+                
+                const skinItem = document.createElement('div');
+                skinItem.className = 'skin-item';
+                
+                const preview = document.createElement('div');
+                preview.className = 'skin-preview';
+                preview.style.background = `linear-gradient(45deg, ${skin.headColors[0]}, ${skin.bodyColors[0]})`;
+                
+                const name = document.createElement('div');
+                name.className = 'skin-name';
+                name.textContent = skin.name;
+                
+                const price = document.createElement('div');
+                price.className = 'skin-price';
+                price.textContent = skin.price === 0 ? 'Free' : `${skin.price} coins`;
+                
+                const button = document.createElement('button');
+                
+                if (isEquipped) {
+                    button.textContent = 'Equipped';
+                    button.className = 'buy-btn equipped';
+                    button.disabled = true;
+                } else if (isOwned) {
+                    button.textContent = 'Equip';
+                    button.className = 'buy-btn owned';
+                    button.onclick = () => equipSkin(skinId);
+                } else {
+                    button.textContent = 'Buy';
+                    button.className = 'buy-btn';
+                    button.disabled = coins < skin.price;
+                    button.onclick = () => buySkin(skinId);
+                }
+                
+                skinItem.appendChild(preview);
+                skinItem.appendChild(name);
+                skinItem.appendChild(price);
+                skinItem.appendChild(button);
+                
+                skinGridElement.appendChild(skinItem);
+            });
+        }
+
+        function buySkin(skinId) {
+            const skin = skins[skinId];
+            if (coins >= skin.price && !ownedSkins.includes(skinId)) {
+                coins -= skin.price;
+                ownedSkins.push(skinId);
+                coinsElement.textContent = coins;
+                populateSkinShop();
+            }
+        }
+
+        function equipSkin(skinId) {
+            if (ownedSkins.includes(skinId)) {
+                currentSkin = skinId;
+                populateSkinShop();
+            }
+        }
+
+        // Handle keyboard input
+        document.addEventListener('keydown', (e) => {
+            if (inMinigame) {
+                switch(minigameType) {
+                    case 0: // Catch game
+                        switch(e.key) {
+                            case 'ArrowLeft':
+                            case 'a':
+                            case 'A':
+                                e.preventDefault();
+                                basketX = Math.max(30, basketX - 15);
+                                break;
+                            case 'ArrowRight':
+                            case 'd':
+                            case 'D':
+                                e.preventDefault();
+                                basketX = Math.min(canvas.width - 30, basketX + 15);
+                                break;
+                        }
+                        break;
+                    case 1: // Shoot game
+                        switch(e.key) {
+                            case 'ArrowLeft':
+                            case 'a':
+                            case 'A':
+                                e.preventDefault();
+                                playerX = Math.max(20, playerX - 15);
+                                break;
+                            case 'ArrowRight':
+                            case 'd':
+                            case 'D':
+                                e.preventDefault();
+                                playerX = Math.min(canvas.width - 20, playerX + 15);
+                                break;
+                            case ' ':
+                                e.preventDefault();
+                                projectiles.push({x: playerX, y: canvas.height - 35});
+                                break;
+                        }
+                        break;
+                    case 2: // Dodge game
+                        switch(e.key) {
+                            case 'ArrowLeft':
+                            case 'a':
+                            case 'A':
+                                e.preventDefault();
+                                playerX = Math.max(10, playerX - 15);
+                                checkDodgeFoodCollection();
+                                break;
+                            case 'ArrowRight':
+                            case 'd':
+                            case 'D':
+                                e.preventDefault();
+                                playerX = Math.min(canvas.width - 10, playerX + 15);
+                                checkDodgeFoodCollection();
+                                break;
+                        }
+                        break;
+                    case 3: // Maze game
+                        const newX = mazePlayerX;
+                        const newY = mazePlayerY;
+                        switch(e.key) {
+                            case 'ArrowUp':
+                            case 'w':
+                            case 'W':
+                                e.preventDefault();
+                                if (!mazeWalls.some(wall => wall.x === newX && wall.y === newY - 1)) {
+                                    mazePlayerY = Math.max(0, mazePlayerY - 1);
+                                }
+                                break;
+                            case 'ArrowDown':
+                            case 's':
+                            case 'S':
+                                e.preventDefault();
+                                if (!mazeWalls.some(wall => wall.x === newX && wall.y === newY + 1)) {
+                                    mazePlayerY = Math.min(9, mazePlayerY + 1);
+                                }
+                                break;
+                            case 'ArrowLeft':
+                            case 'a':
+                            case 'A':
+                                e.preventDefault();
+                                if (!mazeWalls.some(wall => wall.x === newX - 1 && wall.y === newY)) {
+                                    mazePlayerX = Math.max(0, mazePlayerX - 1);
+                                }
+                                break;
+                            case 'ArrowRight':
+                            case 'd':
+                            case 'D':
+                                e.preventDefault();
+                                if (!mazeWalls.some(wall => wall.x === newX + 1 && wall.y === newY)) {
+                                    mazePlayerX = Math.min(9, mazePlayerX + 1);
+                                }
+                                break;
+                        }
+                        break;
+                }
+                return;
+            }
+            
+            if (!gameRunning) return;
+
+            switch(e.key) {
+                case 'ArrowUp':
+                case 'w':
+                case 'W':
+                    e.preventDefault();
+                    changeDirection('up');
+                    break;
+                case 'ArrowDown':
+                case 's':
+                case 'S':
+                    e.preventDefault();
+                    changeDirection('down');
+                    break;
+                case 'ArrowLeft':
+                case 'a':
+                case 'A':
+                    e.preventDefault();
+                    changeDirection('left');
+                    break;
+                case 'ArrowRight':
+                case 'd':
+                case 'D':
+                    e.preventDefault();
+                    changeDirection('right');
+                    break;
+            }
+        });
+
+        function checkDodgeFoodCollection() {
+            for (let food of fallingFood) {
+                if (!food.collected && 
+                    Math.abs(food.x - playerX) < 20 && 
+                    Math.abs(food.y - (canvas.height - 30)) < 20) {
+                    food.collected = true;
+                    minigameScore += 5;
+                    minigameScoreElement.textContent = minigameScore;
+                }
+            }
+        }
+
+        // Game loop
+        function gameLoop() {
+            update();
+            draw();
+            
+            if (gameRunning) {
+                gameLoopId = setTimeout(gameLoop, gameSpeed);
+            }
+        }
+
+        // Start the game
+        init();
+    </script>
+</body>
+</html>
